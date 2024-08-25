@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Container, Typography, Button, Checkbox, FormControlLabel, FormGroup, Box } from '@mui/material';
+import { Container, Typography, Button, Checkbox, FormControlLabel, FormGroup, Box, Paper } from '@mui/material';
 import { UploadFile } from '@mui/icons-material';
-
+import { blue, green, purple } from '@mui/material/colors';
 
 function Home() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -24,61 +24,102 @@ function Home() {
   };
 
   const handleSubmit = () => {
-    // Implement form submission logic, possibly including file upload and selected models
     console.log("Selected File:", selectedFile);
     console.log("Selected Models:", selectedModels);
   };
 
   return (
     <Container maxWidth="sm">
-      <Typography variant="h4" component="h1" gutterBottom>
-        Regression Model Selector
-      </Typography>
-
-      <Box my={4}>
-        <Button
-          variant="contained"
-          component="label"
-          startIcon={<UploadFile />}
+      <Paper elevation={3} style={{ padding: '20px', backgroundColor: '#f3f4f6' }}>
+        <Typography 
+          variant="h3" 
+          component="h1" 
+          gutterBottom 
+          align="center" 
+          color={blue[700]}
+          style={{ fontWeight: 'bold' }}
         >
-          Upload CSV
-          <input
-            type="file"
-            accept=".csv"
-            hidden
-            onChange={handleFileChange}
-          />
-        </Button>
-        {selectedFile && <Typography>{selectedFile.name}</Typography>}
-      </Box>
-
-      <FormGroup>
-        <Typography variant="h6" gutterBottom>
-          Select Regression Models:
+          Concept Drift Detector
         </Typography>
-        <FormControlLabel
-          control={<Checkbox checked={selectedModels.linearRegression} onChange={handleModelChange} name="linearRegression" />}
-          label="Linear Regression"
-        />
-        <FormControlLabel
-          control={<Checkbox checked={selectedModels.decisionTree} onChange={handleModelChange} name="decisionTree" />}
-          label="Decision Tree Regression"
-        />
-        <FormControlLabel
-          control={<Checkbox checked={selectedModels.randomForest} onChange={handleModelChange} name="randomForest" />}
-          label="RandomForest Regression"
-        />
-        <FormControlLabel
-          control={<Checkbox checked={selectedModels.supportVector} onChange={handleModelChange} name="supportVector" />}
-          label="Support Vector Regression"
-        />
-      </FormGroup>
 
-      <Box my={4}>
-        <Button variant="contained" color="primary" onClick={handleSubmit}>
-          Submit
-        </Button>
-      </Box>
+        <Box my={4} textAlign="center">
+          <Button
+            variant="contained"
+            component="label"
+            startIcon={<UploadFile />}
+            sx={{
+              backgroundColor: green[500],
+              color: 'white',
+              '&:hover': {
+                backgroundColor: green[700],
+              },
+              padding: '10px 20px',
+            }}
+          >
+            Upload CSV
+            <input
+              type="file"
+              accept=".csv"
+              hidden
+              onChange={handleFileChange}
+            />
+          </Button>
+          {selectedFile && (
+            <Typography 
+              mt={2} 
+              color="textSecondary"
+              style={{ fontStyle: 'italic' }}
+            >
+              {selectedFile.name}
+            </Typography>
+          )}
+        </Box>
+
+        <FormGroup>
+          <Typography 
+            variant="h5" 
+            gutterBottom 
+            align="center" 
+            color={purple[500]}
+          >
+            Select Regression Models:
+          </Typography>
+          <FormControlLabel
+            control={<Checkbox checked={selectedModels.linearRegression} onChange={handleModelChange} name="linearRegression" sx={{ color: blue[600] }} />}
+            label="Linear Regression"
+          />
+          <FormControlLabel
+            control={<Checkbox checked={selectedModels.decisionTree} onChange={handleModelChange} name="decisionTree" sx={{ color: blue[600] }} />}
+            label="Decision Tree Regression"
+          />
+          <FormControlLabel
+            control={<Checkbox checked={selectedModels.randomForest} onChange={handleModelChange} name="randomForest" sx={{ color: blue[600] }} />}
+            label="RandomForest Regression"
+          />
+          <FormControlLabel
+            control={<Checkbox checked={selectedModels.supportVector} onChange={handleModelChange} name="supportVector" sx={{ color: blue[600] }} />}
+            label="Support Vector Regression"
+          />
+        </FormGroup>
+
+        <Box my={4} textAlign="center">
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleSubmit}
+            sx={{
+              backgroundColor: purple[600],
+              color: 'white',
+              '&:hover': {
+                backgroundColor: purple[800],
+              },
+              padding: '10px 20px',
+            }}
+          >
+            Submit
+          </Button>
+        </Box>
+      </Paper>
     </Container>
   );
 }
