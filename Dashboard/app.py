@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
@@ -11,6 +10,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from frouros.detectors.concept_drift.streaming.statistical_process_control.ddm import DDM, DDMConfig
 from river.datasets import synth
+import altair as alt
 
 # Set the layout to wide mode
 st.set_page_config(layout="wide")
@@ -42,9 +42,6 @@ with col1:
     # Input fields for drift points, step set to 1000
     first_point = st.number_input("Enter the first drift point:", min_value=1000, value=7000, step=1000)
     second_point = st.number_input("Enter the second drift point:", min_value=first_point+1000, value=11000, step=1000)
-    # st.write(f"False Alarms: {false_alarms}")
-    # st.write(f"False Alarm Rate: {false_alarm_rate}")
-    # st.write(f"Average Detection Delay: {average_detection_delay}")
 
 # Button to trigger computation
 if st.button("Check for Drift"):
@@ -145,34 +142,42 @@ if st.button("Check for Drift"):
         st.write(f"False Alarm Rate: {false_alarm_rate}")
         st.write(f"Average Detection Delay: {average_detection_delay}")
 
+    # Prepare the data for Altair visualizations
+    error_data = pd.DataFrame({
+        'Index': np.arange(len(errors)),
+        'Mean Squared Error': errors
+    })
+
+    drift_data = pd.DataFrame({
+        'Index': np.arange(len(data)),
+        'Detected Drift Indicator': [1 if i in detected_drifts else 0 for i in range(len(data))],
+        'Actual Drift Indicator': [1 if i >= odp[0] else 0 for i in range(len(data))]
+    })
+
     # Right side (graphs)
     with col2:
         st.subheader('Mean Squared Error Over Data Points')
-        plt.figure(figsize=(14, 7))
-        plt.plot(range(len(errors)), errors, label="MSE Error", color='purple')
-        plt.xlabel("Instance Index")
-        plt.ylabel("Mean Squared Error")
-        plt.title("Behavior of Mean Squared Error Over Data Points")
-        plt.legend()
-        plt.grid(True)
-        st.pyplot(plt)
-
-        # Create binary arrays for drift detection and odp
-        drift_indicator = np.zeros(len(data))
-        for drift_point in detected_drifts:
-            drift_indicator[drift_point] = 1
-
-        odp_indicator = np.zeros(len(data))
-        for i in range(odp[0], len(data)):
-            odp_indicator[i] = 1
+        mse_chart = alt.Chart(error_data).mark_line(color='purple').encode(
+            x='Index',
+            y='Mean Squared Error'
+        ).properties(
+            width=600,
+            height=300,
+            title="Behavior of Mean Squared Error Over Data Points"
+        )
+        st.altair_chart(mse_chart, use_container_width=True)
 
         st.subheader('Drift Detection Indicator')
-        plt.figure(figsize=(12, 4))
-        plt.plot(drift_indicator, label='Detected Drift Indicator', color='red', drawstyle='steps-post')
-        plt.plot(odp_indicator, label='Actual Drift Indicator (ODP)', color='green', linestyle='-', drawstyle='steps-post')
-        plt.xlabel('Index')
-        plt.ylabel('Drift Detection (0 or 1)')
-        plt.title('Drift Detection Indicator')
-        plt.legend()
-        plt.grid(True)
-        st.pyplot(plt)
+        drift_chart = alt.Chart(drift_data).mark_line().transform_fold(
+            ['Detected Drift Indicator', 'Actual Drift Indicator'],
+            as_=['Indicator Type', 'Value']
+        ).encode(
+            x='Index',
+            y=alt.Y('Value:Q', axis=alt.Axis(title='Drift Detection (0 or 1)')),
+            color='Indicator Type:N'
+        ).properties(
+            width=600,
+            height=300,
+            title="Drift Detection Indicator"
+        )
+        st.altair_chart(drift_chart, use_container_width=True)
