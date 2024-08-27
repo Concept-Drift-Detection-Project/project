@@ -1,0 +1,6 @@
+How to import input dataset stored in cloud server, when drift detection process is run?
+
+Should we ask for the models used in the dataset at the input?
+
+Should we preprocess the input dataset or expect a perfect one?
+
