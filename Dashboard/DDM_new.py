@@ -9,9 +9,6 @@ from sklearn.metrics import mean_squared_error
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from frouros.detectors.concept_drift.streaming.statistical_process_control.ddm import DDM, DDMConfig
-from frouros.detectors.concept_drift.streaming.statistical_process_control.eddm import EDDM, EDDMConfig
-from frouros.detectors.concept_drift import PageHinkley, PageHinkleyConfig
-from frouros.detectors.concept_drift import ADWIN, ADWINConfig
 from river.datasets import synth
 import altair as alt
 
@@ -19,58 +16,37 @@ import altair as alt
 st.set_page_config(layout="wide")
 
 # Title and description
-st.title('Concept Drift Detection in a Synthetic Dataset')
+st.title('Concept Drift Detection Using DDM in a Synthetic Dataset')
 st.write("""
-This app simulates concept drift detection using various methods on a synthetic dataset.
+This app simulates concept drift detection using the DDM method on a synthetic dataset.
 It also displays the performance metrics and drift indicators.
 """)
 
 # Default values for metrics
 false_alarms = 0
 false_alarm_rate = 0.0
-average_detection_delay = 0.0
+detection_delay = 0.0
 
 # Show default parameter values on the left side
 col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("Parameter Values")
-    # Dropdown for selecting the drift detection method
-    drift_method = st.selectbox(
-        "Select Drift Detection Method:",
-        ("DDM", "EDDM", "ADWIN", "Page Hinkley")
-    )
-
+    st.write(f"Drift Detector: DDM")
     # Dropdown for selecting the regression model
     model_choice = st.selectbox(
         "Select the regression model:",
         ("Linear Regressor", "SVM Regressor", "Decision Tree Regressor", "Random Forest Regressor")
     )
 
+    # Sidebar for ADWIN configuration
+    warning_level = st.slider("Warning Level", 0.0, 0.1, 0.01)
+    drift_level = st.slider("Drift Level", 1.0, 10.0, 3.0)
+    min_num_instances = st.slider("Min Number of Instances", 1, 5000, 1000)
+    
     # Input fields for drift points, step set to 1000
     first_point = st.number_input("Enter the first drift point:", min_value=1000, value=7000, step=1000)
-    second_point = st.number_input("Enter the second drift point:", min_value=first_point + 1000, value=11000, step=1000)
-
-    # Parameters based on drift detection method
-    if drift_method == "DDM":
-        warning_level = st.slider("Warning Level", 0.0, 0.1, 0.01)
-        drift_level = st.slider("Drift Level", 1.0, 10.0, 3.0)
-        min_num_instances = st.slider("Min Number of Instances", 1, 5000, 1000)
-    elif drift_method == "EDDM":
-        alpha = st.slider("Alpha", 0.0, 2.0, 0.95)
-        beta = st.slider("Beta", 0.0, 2.0, 0.9)
-        level = st.slider("Level", 0.0, 10.0, 2.0)
-        min_num_instances = st.slider("Min Number of Instances", 1, 100, 30)
-    elif drift_method == "ADWIN":
-        clock = st.slider("Clock", 1, 256, 128)
-        min_window_size = st.slider("Min Window Size", 1, 50, 5)
-        min_num_instances = st.slider("Min Number of Instances", 1, 50, 10)
-        m_value = st.slider("M value", 1, 20, 9)
-    else:  # Page Hinkley
-        lambda_ = st.slider("Lambda", 1.0, 100.0, 10.0)
-        alpha = st.slider("Alpha", 0.0, 1.0, 0.9999)
-        min_num_instances = st.slider("Min Number of Instances", 1, 100, 30)
-        delta = st.slider("Delta", 0.0, 0.1, 0.005)
+    second_point = st.number_input("Enter the second drift point:", min_value=first_point+1000, value=11000, step=1000)
 
 # Button to trigger computation
 if st.button("Check for Drift"):
@@ -93,8 +69,8 @@ if st.button("Check for Drift"):
     column_names = [f'x{i}' for i in range(1, len(x_values) + 1)] + ['y']
     df = pd.DataFrame(data, columns=column_names)
 
-    train = df.iloc[:(first_point // 2)]
-    stream = df.iloc[(first_point // 2):]
+    train = df.iloc[:(first_point//2)]
+    stream = df.iloc[(first_point//2):]
 
     X_train = train.drop(columns='y').values
     y_train = train['y'].values
@@ -123,37 +99,12 @@ if st.button("Check for Drift"):
     y_stream = stream['y'].values
 
     # Detector configuration and instantiation
-    if drift_method == "DDM":
-        config = DDMConfig(
-            warning_level=warning_level,
-            drift_level=drift_level,
-            min_num_instances=min_num_instances,
-        )
-        detector = DDM(config=config)
-    elif drift_method == "EDDM":
-        config = EDDMConfig(
-            alpha=alpha,
-            beta=beta,
-            level=level,
-            min_num_misclassified_instances=min_num_instances
-        )
-        detector = EDDM(config=config)
-    elif drift_method == "ADWIN":
-        config = ADWINConfig(
-            clock=clock, 
-            min_window_size=min_window_size, 
-            min_num_instances=min_num_instances, 
-            m=m_value
-        )
-        detector = ADWIN(config=config)
-    else:  # Page Hinkley
-        config = PageHinkleyConfig(
-            lambda_=lambda_,
-            alpha=alpha,
-            min_num_instances=min_num_instances,
-            delta=delta
-        )
-        detector = PageHinkley(config=config)
+    config = DDMConfig(
+        warning_level=warning_level,  # Define the warning and drift levels
+        drift_level=drift_level,
+        min_num_instances=min_num_instances,
+    )
+    detector = DDM(config=config)
 
     detected_drifts = []
     false_alarms = 0
@@ -161,6 +112,7 @@ if st.button("Check for Drift"):
     y_preds = []
     errors = []
 
+    warning_flag = False
     for i in range(len(X_stream)):
         X_i = X_stream[i].reshape(1, -1)
         y_i = y_stream[i].reshape(1, -1)
@@ -171,9 +123,9 @@ if st.button("Check for Drift"):
         error = mean_squared_error(y_i, y_pred)
         errors.append(error)
 
-        binary_error = 1 if error > 50.0 else 0  # Adjust threshold based on chosen detector
+        binary_error = 1 if error > 50.0 else 0
 
-        # Update the detector with the error
+        # Update DDM with the error 
         detector.update(value=binary_error)
 
         # Check for detected drift
@@ -187,17 +139,17 @@ if st.button("Check for Drift"):
                 detection_delays.append((i + len(train)) - odp[0])
 
     false_alarm_rate = false_alarms / len(detected_drifts) if detected_drifts else 0
-    average_detection_delay = (detection_delays[0]) if detection_delays else None
+    detection_delay =(detection_delays[0]) if detection_delays else None
 
     # Update parameter values with actual results
     with col1:
         st.write(f"False Alarms: {false_alarms}")
-        st.write(f"False Alarm Rate: {false_alarm_rate}%")
-        st.write(f"Average Detection Delay: {average_detection_delay}")
+        st.write(f"False Alarm Rate: {false_alarm_rate}")
+        st.write(f"Average Detection Delay: {detection_delay}")
 
     # Prepare the data for Altair visualizations
     error_data = pd.DataFrame({
-        'Index': np.arange(len(errors)) + (first_point // 2),
+        'Index': np.arange(len(errors))+(first_point//2),
         'Mean Squared Error': errors
     })
 
