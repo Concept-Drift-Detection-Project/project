@@ -66,80 +66,25 @@ def compare():
             X_train = train.drop(columns='y').values
             y_train = train['y'].values
 
-            # # List of detectors
-            # detectors = [
-            #     ('DDM', DDM(config=DDMConfig())),
-            #     ('EDDM', EDDM(config=EDDMConfig())),
-            #     ('ADWIN', ADWIN(config=ADWINConfig())),
-            #     ('Page Hinkley', PageHinkley(config=PageHinkleyConfig()))
-            # ] 
+            # List of detectors
+            detectors = [
+                ('DDM', DDM(config=DDMConfig())),
+                ('EDDM', EDDM(config=EDDMConfig())),
+                ('ADWIN', ADWIN(config=ADWINConfig())),
+                ('Page Hinkley', PageHinkley(config=PageHinkleyConfig()))
+            ] 
 
 
             # Select the regression model based on the dropdown choice
             if model_choice == "Linear Regressor":
                 model = LinearRegression()
-                detectors = [
-                    ('DDM', DDM(config=DDMConfig(
-                        warning_level = 1.65, drift_level = 1.7, min_num_instances = 330
-                    ))),
-                    ('EDDM', EDDM(config=EDDMConfig(
-                        alpha = 0.90, beta = 0.85, level = 1.95, min_num_misclassified_instances = 50
-                    ))),
-                    ('ADWIN', ADWIN(config=ADWINConfig(
-                        clock = 1, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
-                    ))),
-                    ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
-                        delta = 0.005, lambda_ = 14.0, alpha = 0.9999, min_num_instances = 30
-                    )))
-                ]
             elif model_choice == "SVM Regressor":
                 model = SVR()
-                detectors = [
-                    ('DDM', DDM(config=DDMConfig(
-                        warning_level = 2.45, drift_level = 2.5, min_num_instances = 90
-                    ))),
-                    ('EDDM', EDDM(config=EDDMConfig(
-                        alpha = 1.0, beta = 0.95, level = 1.0, min_num_misclassified_instances = 110
-                    ))),
-                    ('ADWIN', ADWIN(config=ADWINConfig(
-                        clock = 5, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
-                    ))),
-                    ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
-                        delta = 0.005, lambda_ = 50.0, alpha = 0.9999, min_num_instances = 30
-                    )))
-                ]
             elif model_choice == "Decision Tree Regressor":
                 model = DecisionTreeRegressor()
-                detectors = [
-                    ('DDM', DDM(config=DDMConfig(
-                        warning_level = 2.65, drift_level = 2.7, min_num_instances = 250
-                    ))),
-                    ('EDDM', EDDM(config=EDDMConfig(
-                        alpha = 0.90, beta = 0.85, level = 1.55, min_num_misclassified_instances = 170
-                    ))),
-                    ('ADWIN', ADWIN(config=ADWINConfig(
-                        clock = 3, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
-                    ))),
-                    ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
-                        delta = 0.005, lambda_ = 71.0, alpha = 0.9999, min_num_instances = 34
-                    )))
-                ]
             else:
                 model = RandomForestRegressor()
-                detectors = [
-                    ('DDM', DDM(config=DDMConfig(
-                        warning_level = 5.05, drift_level = 5.1, min_num_instances = 30
-                    ))),
-                    ('EDDM', EDDM(config=EDDMConfig(
-                        alpha = 0.8, beta = 0.75, level = 1.85, min_num_misclassified_instances = 110
-                    ))),
-                    ('ADWIN', ADWIN(config=ADWINConfig(
-                        clock = 3, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
-                    ))),
-                    ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
-                        delta = 0.005, lambda_ = 3.0, alpha = 0.9999, min_num_instances = 10
-                    )))
-                ]
+
 
             pipeline = Pipeline(
                 [

@@ -5,8 +5,8 @@ from streamlit_option_menu import option_menu
 with st.sidebar:
     selected = option_menu(
         "Concept Drift Detection",  # Sidebar title
-        ["Home", "Simulation", "Comparison"],  # Menu options
-        icons=["house", "activity", "table"],  # Icons for menu options
+        ["Home", "Simulation", "Default Run", "Comparison", "Real Comparison"],  # Menu options
+        icons=["house", "activity", "list-task", "table", "cloud-upload"],  # Icons for menu options
         menu_icon="cast",  # Icon for the menu
         default_index=0,  # Default selected option
     )
@@ -18,6 +18,13 @@ if selected == "Home":
 elif selected == "Simulation":
     import simulation
     simulation.run_simulation()
+elif selected == "Default Run":
+    import default
+    default.compare()
 elif selected == "Comparison":
     import comparison
     comparison.compare()
+elif selected == "Real Comparison":
+    import comparison_real
+    comparison_real.compare()
+
