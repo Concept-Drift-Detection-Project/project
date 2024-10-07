@@ -12,6 +12,7 @@ from frouros.detectors.concept_drift.streaming.statistical_process_control.ddm i
 from frouros.detectors.concept_drift.streaming.statistical_process_control.eddm import EDDM, EDDMConfig
 from frouros.detectors.concept_drift import PageHinkley, PageHinkleyConfig
 from frouros.detectors.concept_drift import ADWIN, ADWINConfig
+from frouros.metrics import PrequentialError
 from river.datasets import synth
 import altair as alt
 
@@ -105,6 +106,8 @@ def compare():
             error_data = {}
             drift_data = {}
 
+            metric = PrequentialError(alpha=0.9)
+
             for detector_name, detector in detectors:
                 detected_drifts = []
                 false_alarms = 0
@@ -112,33 +115,81 @@ def compare():
                 y_preds = []
                 errors = []
 
-                for i in range(len(X_stream)):
-                    X_i = X_stream[i].reshape(1, -1)
-                    y_i = y_stream[i].reshape(1, -1)
 
-                    # Predict and calculate the error
-                    y_pred = pipeline.predict(X_i)
-                    y_preds.append(y_pred[0])
-                    error = mean_squared_error(y_i, y_pred)
-                    errors.append(error)
+                if detector_name in ['DDM','EDDM','ADWIN','Page Hinkley']:
+                    for i in range(len(X_stream)):
+                        X_i = X_stream[i].reshape(1, -1)
+                        y_i = y_stream[i].reshape(1, -1)
 
-                    binary_error = 1 if error > 50.0 else 0
+                        threshold = 50.0 # if detector_name=='DDM' else 83.146
 
-                    # Update the detector with the error
-                    detector.update(value=binary_error)
+                        # Predict and calculate the error
+                        y_pred = pipeline.predict(X_i)
+                        y_preds.append(y_pred[0])
+                        error = mean_squared_error(y_i, y_pred)
+                        errors.append(error)
 
-                    # Check for detected drift
-                    if detector.drift:
-                        detected_drifts.append(i + len(train))
+                        binary_error = 1 if error > threshold else 0
 
-                        # False alarm detection
-                        if i + len(train) < odp[0]:
-                            false_alarms += 1
-                        else:
-                            detection_delays.append((i + len(train)) - odp[0])
+                        # Update the detector with the error
+                        detector.update(value=binary_error)
 
-                false_alarm_rate = false_alarms / len(detected_drifts) if detected_drifts else 0
-                average_detection_delay = (detection_delays[0]) if detection_delays else None
+                        # Check for detected drift
+                        if detector.drift:
+                            detected_drifts.append(i + len(train))
+
+                            # False alarm detection
+                            if i + len(train) < odp[0]:
+                                false_alarms += 1
+                            else:
+                                detection_delays.append((i + len(train)) - odp[0])
+
+                    false_alarm_rate = false_alarms / len(detected_drifts) if detected_drifts else 0
+                    average_detection_delay = (detection_delays[0]) if detection_delays else None
+
+                else: 
+                    for i in range(len(X_stream)):
+                        X_i = X_stream[i].reshape(1, -1)
+                        y_i = y_stream[i].reshape(1, -1)
+
+                        # Predict and calculate the error
+                        y_pred = pipeline.predict(X_i)
+                        y_preds.append(y_pred[0])
+                        error = mean_squared_error(y_true=y_i, y_pred=y_pred)
+                        metric_error = metric(error_value=error)
+                        # error = metric(error_value=mean_squared_error(y_true=y_i, y_pred=y_pred))
+                        errors.append(metric_error)
+
+                        # Update Page Hinkley with the error (0 for correct, 1 for incorrect)
+                        # detector.update(value=1 if error > 0 else 0)
+
+                        # Step 4: Update the drift detector with the current error
+                        detector.update(value=metric_error)
+
+                        # Step 5: Check for detected drift
+                        if detector.drift:
+                            # print(f"Change detected at step {i}")
+                            detected_drifts.append(i + len(train))
+
+                            # Determine if it's a false alarm or not
+                            if i + len(train) < odp[0]:  # Compare with the original drift point
+                                false_alarms += 1
+                            else:
+                                #if isFirst:
+                                    #isFirst = False
+                                detection_delays.append(i + len(train) - odp[0])
+                            detector.reset()
+
+                        # Check for detected warning
+                        #if not warning_flag and detector.warning:
+                        #   print(f"Warning detected at step {i}")
+                        #  warning_flag = True
+
+                    false_alarm_rate = (false_alarms / (len(X_stream) - first_point)) * 100 if detected_drifts else 0
+                    average_detection_delay = np.mean(detection_delays) if detection_delays else None
+
+
+
 
                 # Save results
                 drift_results[detector_name] = {
