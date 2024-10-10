@@ -116,7 +116,7 @@ def compare():
                 errors = []
 
 
-                if detector_name in ['DDM','EDDM','ADWIN','Page Hinkley']:
+                if detector_name in ['DDM','EDDM']:
                     for i in range(len(X_stream)):
                         X_i = X_stream[i].reshape(1, -1)
                         y_i = y_stream[i].reshape(1, -1)
@@ -144,7 +144,7 @@ def compare():
                             else:
                                 detection_delays.append((i + len(train)) - odp[0])
 
-                    false_alarm_rate = false_alarms / len(detected_drifts) if detected_drifts else 0
+                    false_alarm_rate = false_alarms / (first_point-len(train)) if detected_drifts else 0
                     average_detection_delay = (detection_delays[0]) if detection_delays else None
 
                 else: 
@@ -164,7 +164,7 @@ def compare():
                         # detector.update(value=1 if error > 0 else 0)
 
                         # Step 4: Update the drift detector with the current error
-                        detector.update(value=metric_error)
+                        detector.update(value=error)
 
                         # Step 5: Check for detected drift
                         if detector.drift:
@@ -185,9 +185,8 @@ def compare():
                         #   print(f"Warning detected at step {i}")
                         #  warning_flag = True
 
-                    false_alarm_rate = (false_alarms / (len(X_stream) - first_point)) * 100 if detected_drifts else 0
-                    average_detection_delay = np.mean(detection_delays) if detection_delays else None
-
+                    false_alarm_rate = (false_alarms / (first_point-len(train))) if detected_drifts else 0
+                    average_detection_delay = int(detection_delays[0]) if detection_delays else None
 
 
 
@@ -204,9 +203,17 @@ def compare():
                     'Mean Squared Error': errors
                 })
 
+                detected_stream = [0]*len(data)
+
+                for p in detected_drifts:
+                    detected_stream[p] = 1 
+                    if p > odp[0] :
+                        detected_stream[p:] = [1]*(len(data) - p) 
+                        break 
+
                 drift_data[detector_name] = pd.DataFrame({
                     'Index': np.arange(len(data)),
-                    'Detected Drift Indicator': [1 if i in detected_drifts else 0 for i in range(len(data))],
+                    'Detected Drift Indicator': detected_stream,
                     'Actual Drift Indicator': [1 if i >= odp[0] else 0 for i in range(len(data))]
                 })
 

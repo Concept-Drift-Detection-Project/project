@@ -28,8 +28,8 @@ def choose():
     st.subheader("Drift Detection Results Table")
 
     # Input fields for drift points
-    first_point = st.number_input("Enter the first drift point:", min_value=1000, value=7000, step=1000)
-    second_point = st.number_input("Enter the second drift point:", min_value=first_point + 1000, value=14000, step=1000)
+    first_point = st.number_input("Enter the first drift point:", min_value=1000, value=48000, step=1000)
+    second_point = st.number_input("Enter the second drift point:", min_value=first_point + 1000, value=75000, step=1000)
 
 
     if st.button("Run Drift Detection"):
@@ -76,7 +76,7 @@ def choose():
                         clock = 1, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
                     ))),
                     ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
-                        delta = 0.005, lambda_ = 14.0, alpha = 0.9999, min_num_instances = 30
+                        delta = 0.005, lambda_ = 14.0, alpha = 0.9999, min_num_instances = 80
                     )))
                 ]
             ]
@@ -105,7 +105,7 @@ def choose():
                         alpha = 0.90, beta = 0.85, level = 1.55, min_num_misclassified_instances = 170
                     ))),
                     ('ADWIN', ADWIN(config=ADWINConfig(
-                        clock = 3, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
+                        clock = 3, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10 
                     ))),
                     ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
                         delta = 0.005, lambda_ = 71.0, alpha = 0.9999, min_num_instances = 34
@@ -124,7 +124,7 @@ def choose():
                         clock = 3, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
                     ))),
                     ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
-                        delta = 0.005, lambda_ = 3.0, alpha = 0.9999, min_num_instances = 10
+                        delta = 0.005, lambda_ = 3.0, alpha = 0.9999, min_num_instances = 10 
                     )))
                 ]
             ]
@@ -167,7 +167,7 @@ def choose():
                 y_preds = []
                 errors = []
 
-                if detector_name in ['DDM','EDDM','ADWIN','Page Hinkley']:
+                if detector_name in ['DDM','EDDM']: 
                     for i in range(len(X_stream)):
                         X_i = X_stream[i].reshape(1, -1)
                         y_i = y_stream[i].reshape(1, -1)
@@ -195,7 +195,7 @@ def choose():
                             else:
                                 detection_delays.append((i + len(train)) - odp[0])
 
-                    false_alarm_rate = false_alarms / len(detected_drifts) if detected_drifts else 0
+                    false_alarm_rate = false_alarms / (first_point-len(train)) if detected_drifts else 0
                     average_detection_delay = (detection_delays[0]) if detection_delays else None
 
                 else:
@@ -236,14 +236,15 @@ def choose():
                         #   print(f"Warning detected at step {i}")
                         #  warning_flag = True
 
-                    false_alarm_rate = (false_alarms / (len(X_stream) - first_point)) * 100 if detected_drifts else 0
-                    average_detection_delay = np.mean(detection_delays) if detection_delays else None
+                    false_alarm_rate = (false_alarms / (first_point-len(train))) * 100 if detected_drifts else 0
+                    average_detection_delay = int(detection_delays[0]) if detection_delays else None
 
                 # Save results
                 drift_results[detector_name] = {
                     'False Alarms': false_alarms,
                     'False Alarm Rate': false_alarm_rate,
-                    'Average Detection Delay': average_detection_delay
+                    'Detection Delay': average_detection_delay,
+                    'Average Measure': (false_alarms + average_detection_delay) / 2 
                 }
 
                 # Prepare data for visualizations
@@ -305,7 +306,7 @@ def choose():
                 y_preds = []
                 errors = []
 
-                if detector_name in ['DDM','EDDM','ADWIN','Page Hinkley']:
+                if detector_name in ['DDM','EDDM']:
                     for i in range(len(X_stream)):
                         X_i = X_stream[i].reshape(1, -1)
                         y_i = y_stream[i].reshape(1, -1)
@@ -333,8 +334,8 @@ def choose():
                             else:
                                 detection_delays.append((i + len(train)) - odp[0])
 
-                    false_alarm_rate = false_alarms / len(detected_drifts) if detected_drifts else 0
-                    average_detection_delay = (detection_delays[0]) if detection_delays else None
+                    false_alarm_rate = false_alarms / (first_point-len(train)) if detected_drifts else 0
+                    average_detection_delay = int(detection_delays[0]) if detection_delays else None
 
                 else:
                     for i in range(len(X_stream)):
@@ -374,14 +375,15 @@ def choose():
                         #   print(f"Warning detected at step {i}")
                         #  warning_flag = True
 
-                    false_alarm_rate = (false_alarms / (len(X_stream) - first_point)) * 100 if detected_drifts else 0
-                    average_detection_delay = np.mean(detection_delays) if detection_delays else None
+                    false_alarm_rate = (false_alarms / (first_point-len(train))) * 100 if detected_drifts else 0
+                    average_detection_delay = int(detection_delays[0]) if detection_delays else None
 
                 # Save results
                 drift_results[detector_name] = {
                     'False Alarms': false_alarms,
                     'False Alarm Rate': false_alarm_rate,
-                    'Average Detection Delay': average_detection_delay
+                    'Detection Delay': average_detection_delay,
+                    'Average Measure': (false_alarms + average_detection_delay) / 2 
                 }
 
                 # Prepare data for visualizations

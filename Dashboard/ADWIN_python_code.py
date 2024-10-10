@@ -101,7 +101,7 @@ for i in range(len(X_test)):
     errors.append(error)
 
     # Update ADWIN with the error (0 for correct, 1 for incorrect)
-    detector.update(value=1 if error > 0 else 0)
+    #detector.update(value=1 if error > 0 else 0)
 
     # Step 4: Update the drift detector with the current error
     detector.update(value=error)

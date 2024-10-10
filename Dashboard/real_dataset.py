@@ -64,7 +64,7 @@ def detect():
                 ("Linear Regressor", "SVM Regressor", "Decision Tree Regressor", "Random Forest Regressor")
             )
 
-            adp = st.number_input("Enter the assumed drift point:", min_value=1000, value=7000, step=1000)
+            adp = st.number_input("Enter the assumed drift point:", min_value=1000, value=7000, step=500)
 
 
         if st.button("Plot MSE"):
@@ -121,7 +121,7 @@ def detect():
             first_10_percent = errors1[:length//10]
             mse1 = np.mean(first_10_percent) if errors1 else 0
 
-            last_10_percent = errors1[(length-length//10):]
+            last_10_percent = errors1[-length//10:]
             mse2 = np.mean(last_10_percent) if errors1 else 1.0
 
             with col1:
@@ -178,19 +178,111 @@ def detect():
             X_stream = stream.drop(columns=y_value).values
             y_stream = stream[y_value].values
 
+            # # Detector configuration and instantiation
+            # if drift_method == "DDM":
+            #     config = DDMConfig()
+            #     detector = DDM(config=config)
+            # elif drift_method == "EDDM":
+            #     config = EDDMConfig()
+            #     detector = EDDM(config=config)
+            # elif drift_method == "ADWIN":
+            #     config = ADWINConfig()
+            #     detector = ADWIN(config=config)
+            # else:  # Page Hinkley
+            #     config = PageHinkleyConfig()
+            #     detector = PageHinkley(config=config)
+
+
             # Detector configuration and instantiation
             if drift_method == "DDM":
-                config = DDMConfig()
-                detector = DDM(config=config)
+                if model_choice == "Linear Regressor":
+                    config = DDMConfig(
+                        warning_level = 1.65, drift_level = 1.7, min_num_instances = 330
+                    )
+                    detector = DDM(config=config)
+                if model_choice == "SVM Regressor":
+                    config = DDMConfig(
+                        warning_level = 2.45, drift_level = 2.5, min_num_instances = 90
+                    )
+                    detector = DDM(config=config)
+                if model_choice == "Decision Tree Regressor":
+                    config = DDMConfig(
+                        warning_level = 2.65, drift_level = 2.7, min_num_instances = 250
+                    )
+                    detector = DDM(config=config)
+                if model_choice == "Random Forest Regressor":
+                    config = DDMConfig(
+                        warning_level = 5.05, drift_level = 5.1, min_num_instances = 30
+                    )
+                    detector = DDM(config=config)
+
             elif drift_method == "EDDM":
-                config = EDDMConfig()
-                detector = EDDM(config=config)
+                if model_choice == "Linear Regressor":
+                    config = EDDMConfig(
+                        alpha = 0.90, beta = 0.85, level = 1.95, min_num_misclassified_instances = 50
+                    )
+                    detector = EDDM(config=config)
+                if model_choice == "SVM Regressor":
+                    config = EDDMConfig(
+                        alpha = 1.0, beta = 0.95, level = 1.0, min_num_misclassified_instances = 110
+                    )
+                    detector = EDDM(config=config)
+                if model_choice == "Decision Tree Regressor":
+                    config = EDDMConfig(
+                        alpha = 0.90, beta = 0.85, level = 1.55, min_num_misclassified_instances = 170
+                    )
+                    detector = EDDM(config=config)
+                if model_choice == "Random Forest Regressor":
+                    config = EDDMConfig(
+                        alpha = 0.8, beta = 0.75, level = 1.85, min_num_misclassified_instances = 110
+                    )
+                    detector = EDDM(config=config)
+
             elif drift_method == "ADWIN":
-                config = ADWINConfig()
-                detector = ADWIN(config=config)
+                if model_choice == "Linear Regressor":
+                    config = ADWINConfig(
+                        clock = 1, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
+                    )
+                    detector = ADWIN(config=config)
+                if model_choice == "SVM Regressor":
+                    config = ADWINConfig(
+                        clock = 5, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
+                    )
+                    detector = ADWIN(config=config)
+                if model_choice == "Decision Tree Regressor":
+                    config = ADWINConfig(
+                        clock = 3, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10 
+                    )
+                    detector = ADWIN(config=config)
+                if model_choice == "Random Forest Regressor":
+                    config = ADWINConfig(
+                        clock = 3, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
+                    )
+                    detector = ADWIN(config=config)
+
             else:  # Page Hinkley
-                config = PageHinkleyConfig()
-                detector = PageHinkley(config=config)
+                if model_choice == "Linear Regressor":
+                    config = PageHinkleyConfig(
+                        delta = 0.005, lambda_ = 14.0, alpha = 0.9999, min_num_instances = 80
+                    )
+                    detector = PageHinkley(config=config)
+                if model_choice == "SVM Regressor":
+                    config = PageHinkleyConfig(
+                        delta = 0.005, lambda_ = 50.0, alpha = 0.9999, min_num_instances = 30
+                    )
+                    detector = PageHinkley(config=config)
+                if model_choice == "Decision Tree Regressor":
+                    config = PageHinkleyConfig(
+                        delta = 0.005, lambda_ = 71.0, alpha = 0.9999, min_num_instances = 34
+                    )
+                    detector = PageHinkley(config=config)
+                if model_choice == "Random Forest Regressor":
+                    config = PageHinkleyConfig(
+                        delta = 0.005, lambda_ = 3.0, alpha = 0.9999, min_num_instances = 10 
+                    )
+                    detector = PageHinkley(config=config)
+
+
 
             detected_drifts = []
             false_alarms = 0
@@ -208,7 +300,7 @@ def detect():
                 error = mean_squared_error(y_i, y_pred)
                 errors.append(error)
 
-                binary_error = 1 if error > 0.5*(abs(mse2-mse1)) else 0  # Adjust threshold based on chosen detector
+                binary_error = 1 if error > 0.1*(abs(mse2-mse1)) else 0  # Adjust threshold based on chosen detector
 
                 # Update the detector with the error
                 detector.update(value=binary_error)
@@ -222,16 +314,18 @@ def detect():
                         false_alarms += 1
                     else:
                         detection_delays.append((i + len(train)) - adp)
+                else:
+                    last_out = i+len(train)
 
-            false_alarm_rate = false_alarms / len(detected_drifts) if detected_drifts else 0
-            average_detection_delay = (detection_delays[0]) if detection_delays else None
+            false_alarm_rate = (false_alarms / (first_point-len(train))) if detected_drifts else 0
+            average_detection_delay = last_out+1-adp
 
             # Update parameter values with actual results
             with col1:
                 st.write(f"False Alarms: {false_alarms}")
-                st.write(f"False Alarm Rate: {false_alarm_rate}%")
+                st.write(f"False Alarm Rate: {false_alarm_rate}")
                 st.write(f"Average Detection Delay: {average_detection_delay}")
-                st.write(f"Drift Point: {adp + average_detection_delay}") 
+                st.write(f"Drift Point: {last_out + 1}") 
 
             # Prepare the data for Altair visualizations
             error_data = pd.DataFrame({
