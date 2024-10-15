@@ -37,8 +37,8 @@ def compare():
         )
 
         # Input fields for drift points
-        first_point = st.number_input("Enter the first drift point:", min_value=1000, value=18000, step=1000)
-        second_point = st.number_input("Enter the second drift point:", min_value=first_point + 1000, value=35000, step=1000)
+        first_point = st.number_input("Enter the first drift point:", min_value=1000, value=7000, step=1000)
+        second_point = st.number_input("Enter the second drift point:", min_value=first_point + 1000, value=11000, step=1000)
 
         # Button to trigger computation
         if st.button("Run Drift Detection"):

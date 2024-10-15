@@ -2,13 +2,11 @@ import streamlit as st
 import pandas as pd
 
 
-def show():
+def show(): 
 
     st.title("Best Configurations for Drift Detection Methods")
 
-    st.write("""
-    This page displays the best configuration values for the drift detection methods.
-    """)
+    st.write("This page displays the best configuration values for the drift detection methods.")
 
 
     # Best configurations values for Linear Regressor

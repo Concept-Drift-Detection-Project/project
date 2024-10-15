@@ -240,7 +240,7 @@ def run_simulation():
         # Update parameter values with actual results
         with col1:
             st.write(f"False Alarms: {false_alarms}")
-            st.write(f"False Alarm Rate: {false_alarm_rate}%")
+            st.write(f"False Alarm Rate: {false_alarm_rate}")
             st.write(f"Average Detection Delay: {average_detection_delay}")
 
         # Prepare the data for Altair visualizations

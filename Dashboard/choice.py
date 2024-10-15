@@ -28,8 +28,8 @@ def choose():
     st.subheader("Drift Detection Results Table")
 
     # Input fields for drift points
-    first_point = st.number_input("Enter the first drift point:", min_value=1000, value=48000, step=1000)
-    second_point = st.number_input("Enter the second drift point:", min_value=first_point + 1000, value=75000, step=1000)
+    first_point = st.number_input("Enter the first drift point:", min_value=1000, value=8000, step=1000)
+    second_point = st.number_input("Enter the second drift point:", min_value=first_point + 1000, value=11000, step=1000)
 
 
     if st.button("Run Drift Detection"):
