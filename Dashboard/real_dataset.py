@@ -56,7 +56,7 @@ def detect():
         errors1 = []
 
         # Show default parameter values on the left side
-        col1, col2 = st.columns(2)
+        col1, empty_col, col2 = st.columns([1, 0.1, 1]) 
 
         with col1:
             st.subheader("Parameter Values")
@@ -73,10 +73,12 @@ def detect():
             )
 
             # Dropdown for selecting the configuration of the detector
-            configuration = st.selectbox(
-                "Select the configuration:",
-                ("Optimal", "Default")
-            )
+            # configuration = st.selectbox(
+            #     "Select the configuration:",
+            #     ("Optimal", "Default")
+            # )
+
+            configuration = "Optimal"  
 
             adp = st.number_input("Enter the assumed drift point:", min_value=1000, value=7000, step=500)
 

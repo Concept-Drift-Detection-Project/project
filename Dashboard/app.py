@@ -1,9 +1,25 @@
 import streamlit as st
 
-# Define the navigation menu using st.radio
+# Custom CSS to increase the font size of the sidebar title
+st.markdown(
+    """
+    <style>
+    .sidebar .sidebar-content h1 {
+        font-size: 48px;
+        font-weight: bold;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Sidebar title with increased font size
+st.sidebar.markdown("<h1>DRIFTMARK  AI</h1>", unsafe_allow_html=True)
+
+# Sidebar navigation menu using st.radio
 selected = st.sidebar.radio(
-    "Concept Drift Detection",  # Sidebar title
-    ["Home", "Simulation", "Default Run", "Comparison", "Choice", "Upload"]  # Menu options
+    "",  # No title for radio since we manually created a title above
+    ["Home", "Simulation", "Comparison", "Choice", "Upload"]  # Menu options
 )
 
 # Routing based on selected page
@@ -13,9 +29,6 @@ if selected == "Home":
 elif selected == "Simulation":
     import simulation
     simulation.run_simulation()
-elif selected == "Default Run":
-    import default
-    default.compare()
 elif selected == "Comparison":
     import comparison
     comparison.compare()

@@ -27,7 +27,7 @@ def compare():
     """)
 
     # Left and Right side columns
-    col1, col2 = st.columns(2)
+    col1, empty_col, col2 = st.columns([1, 0.1, 1])
 
     with col1:
         st.subheader("Drift Detection Results Table")
@@ -194,7 +194,8 @@ def compare():
                 drift_results[detector_name] = {
                     'False Alarms': false_alarms,
                     'False Alarm Rate': false_alarm_rate,
-                    'Average Detection Delay': average_detection_delay
+                    'Detection Delay': average_detection_delay,
+                    'Average Measure': (false_alarms + average_detection_delay) / 2
                 }
 
                 # Prepare data for visualizations
@@ -236,13 +237,25 @@ def compare():
                 # Plot Detection Delay
                 detection_delay_chart = alt.Chart(results_df.reset_index()).mark_bar().encode(
                     x=alt.X('index:N', title='Detector'),
-                    y=alt.Y('Average Detection Delay:Q', title='Detection Delay')
+                    y=alt.Y('Detection Delay:Q', title='Detection Delay')
                 ).properties(
                     width=600,
                     height=300,
-                    title='Average Detection Delay for Each Detector'
+                    title='Detection Delay for Each Detector'
                 )
                 st.altair_chart(detection_delay_chart, use_container_width=True)
+
+                # Plot Average Measure
+                detection_delay_chart = alt.Chart(results_df.reset_index()).mark_bar().encode(
+                    x=alt.X('index:N', title='Detector', sort=None),
+                    y=alt.Y('Average Measure:Q', title='Average Measure')
+                ).properties(
+                    width=600,
+                    height=300,
+                    title='Average Measure for Each Detector'
+                )
+                st.altair_chart(detection_delay_chart, use_container_width=True)
+
 
             # Right side (graphs)
             with col2:

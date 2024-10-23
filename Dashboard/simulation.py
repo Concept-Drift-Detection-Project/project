@@ -32,7 +32,7 @@ def run_simulation():
     average_detection_delay = 0.0
 
     # Show default parameter values on the left side
-    col1, col2 = st.columns(2)
+    col1, empty_col, col2 = st.columns([1, 0.1, 1])
 
     with col1:
         st.subheader("Parameter Values")
@@ -241,7 +241,7 @@ def run_simulation():
         with col1:
             st.write(f"False Alarms: {false_alarms}")
             st.write(f"False Alarm Rate: {false_alarm_rate}")
-            st.write(f"Average Detection Delay: {average_detection_delay}")
+            st.write(f"Detection Delay: {average_detection_delay}") 
 
         # Prepare the data for Altair visualizations
         error_data = pd.DataFrame({

@@ -286,13 +286,13 @@ def choose():
 
     
         # Sort the results by average measure in ascending order and select the top 4
-        sorted_results = sorted(optimum_all_results, key=lambda x: x[2])[:4]
+        sorted_results = sorted(optimum_all_results, key=lambda x: x[2])[:5]
 
         with col1:
             # Display the top 4 combinations at the bottom of the app
             st.subheader("Least Average Measures") 
-            top_4_df = pd.DataFrame(sorted_results, columns=["Model", "Detector", "Average Measure"])
-            st.write(top_4_df)
+            top_5_df = pd.DataFrame(sorted_results, columns=["Model", "Detector", "Average Measure"])
+            st.write(top_5_df) 
 
         with col2:
             # Convert 'all_results' to a DataFrame

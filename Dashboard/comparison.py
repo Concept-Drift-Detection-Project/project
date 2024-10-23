@@ -27,13 +27,19 @@ def compare():
     """)
 
     # Left and Right side columns
-    col1, col2 = st.columns(2)
+    col1, empty_col, col2 = st.columns([1, 0.1, 1]) 
 
     with col1:
         st.subheader("Drift Detection Results Table")
         model_choice = st.selectbox(
             "Select the regression model:",
             ("Linear Regressor", "SVM Regressor", "Decision Tree Regressor", "Random Forest Regressor")
+        )
+
+        # Dropdown for selecting the configuration of the detector
+        configuration = st.selectbox(
+            "Select the configuration:",
+            ("Optimal", "Default")
         )
 
         # Input fields for drift points
@@ -77,70 +83,87 @@ def compare():
 
 
             # Select the regression model based on the dropdown choice
-            if model_choice == "Linear Regressor":
-                model = LinearRegression()
+            if configuration == "Optimal":
+                if model_choice == "Linear Regressor":
+                    model = LinearRegression()
+                    detectors = [
+                        ('DDM', DDM(config=DDMConfig(
+                            warning_level = 1.65, drift_level = 1.7, min_num_instances = 330
+                        ))),
+                        ('EDDM', EDDM(config=EDDMConfig(
+                            alpha = 0.90, beta = 0.85, level = 1.95, min_num_misclassified_instances = 50
+                        ))),
+                        ('ADWIN', ADWIN(config=ADWINConfig(
+                            clock = 1, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
+                        ))),
+                        ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
+                            delta = 0.005, lambda_ = 14.0, alpha = 0.9999, min_num_instances = 80
+                        )))
+                    ]
+                elif model_choice == "SVM Regressor":
+                    model = SVR()
+                    detectors = [
+                        ('DDM', DDM(config=DDMConfig(
+                            warning_level = 2.45, drift_level = 2.5, min_num_instances = 90
+                        ))),
+                        ('EDDM', EDDM(config=EDDMConfig(
+                            alpha = 1.0, beta = 0.95, level = 1.0, min_num_misclassified_instances = 110
+                        ))),
+                        ('ADWIN', ADWIN(config=ADWINConfig(
+                            clock = 5, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
+                        ))),
+                        ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
+                            delta = 0.005, lambda_ = 50.0, alpha = 0.9999, min_num_instances = 30
+                        )))
+                    ]
+                elif model_choice == "Decision Tree Regressor":
+                    model = DecisionTreeRegressor()
+                    detectors = [
+                        ('DDM', DDM(config=DDMConfig(
+                            warning_level = 2.65, drift_level = 2.7, min_num_instances = 250
+                        ))),
+                        ('EDDM', EDDM(config=EDDMConfig(
+                            alpha = 0.90, beta = 0.85, level = 1.55, min_num_misclassified_instances = 170
+                        ))),
+                        ('ADWIN', ADWIN(config=ADWINConfig(
+                            clock = 3, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10 
+                        ))),
+                        ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
+                            delta = 0.005, lambda_ = 71.0, alpha = 0.9999, min_num_instances = 34
+                        )))
+                    ]
+                else:
+                    model = RandomForestRegressor()
+                    detectors = [
+                        ('DDM', DDM(config=DDMConfig(
+                            warning_level = 5.05, drift_level = 5.1, min_num_instances = 30
+                        ))),
+                        ('EDDM', EDDM(config=EDDMConfig(
+                            alpha = 0.8, beta = 0.75, level = 1.85, min_num_misclassified_instances = 110
+                        ))),
+                        ('ADWIN', ADWIN(config=ADWINConfig(
+                            clock = 3, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
+                        ))),
+                        ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
+                            delta = 0.005, lambda_ = 3.0, alpha = 0.9999, min_num_instances = 10 
+                        )))
+                    ]
+            else:  # Default 
                 detectors = [
-                    ('DDM', DDM(config=DDMConfig(
-                        warning_level = 1.65, drift_level = 1.7, min_num_instances = 330
-                    ))),
-                    ('EDDM', EDDM(config=EDDMConfig(
-                        alpha = 0.90, beta = 0.85, level = 1.95, min_num_misclassified_instances = 50
-                    ))),
-                    ('ADWIN', ADWIN(config=ADWINConfig(
-                        clock = 1, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
-                    ))),
-                    ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
-                        delta = 0.005, lambda_ = 14.0, alpha = 0.9999, min_num_instances = 80
-                    )))
-                ]
-            elif model_choice == "SVM Regressor":
-                model = SVR()
-                detectors = [
-                    ('DDM', DDM(config=DDMConfig(
-                        warning_level = 2.45, drift_level = 2.5, min_num_instances = 90
-                    ))),
-                    ('EDDM', EDDM(config=EDDMConfig(
-                        alpha = 1.0, beta = 0.95, level = 1.0, min_num_misclassified_instances = 110
-                    ))),
-                    ('ADWIN', ADWIN(config=ADWINConfig(
-                        clock = 5, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
-                    ))),
-                    ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
-                        delta = 0.005, lambda_ = 50.0, alpha = 0.9999, min_num_instances = 30
-                    )))
-                ]
-            elif model_choice == "Decision Tree Regressor":
-                model = DecisionTreeRegressor()
-                detectors = [
-                    ('DDM', DDM(config=DDMConfig(
-                        warning_level = 2.65, drift_level = 2.7, min_num_instances = 250
-                    ))),
-                    ('EDDM', EDDM(config=EDDMConfig(
-                        alpha = 0.90, beta = 0.85, level = 1.55, min_num_misclassified_instances = 170
-                    ))),
-                    ('ADWIN', ADWIN(config=ADWINConfig(
-                        clock = 3, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10 
-                    ))),
-                    ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
-                        delta = 0.005, lambda_ = 71.0, alpha = 0.9999, min_num_instances = 34
-                    )))
-                ]
-            else:
-                model = RandomForestRegressor()
-                detectors = [
-                    ('DDM', DDM(config=DDMConfig(
-                        warning_level = 5.05, drift_level = 5.1, min_num_instances = 30
-                    ))),
-                    ('EDDM', EDDM(config=EDDMConfig(
-                        alpha = 0.8, beta = 0.75, level = 1.85, min_num_misclassified_instances = 110
-                    ))),
-                    ('ADWIN', ADWIN(config=ADWINConfig(
-                        clock = 3, delta = 0.002, m = 9, min_window_size = 1, min_num_instances = 10
-                    ))),
-                    ('Page Hinkley', PageHinkley(config=PageHinkleyConfig(
-                        delta = 0.005, lambda_ = 3.0, alpha = 0.9999, min_num_instances = 10 
-                    )))
-                ]
+                        ('DDM', DDM(config=DDMConfig())),
+                        ('EDDM', EDDM(config=EDDMConfig())),
+                        ('ADWIN', ADWIN(config=ADWINConfig())),
+                        ('Page Hinkley', PageHinkley(config=PageHinkleyConfig()))
+                    ] 
+                if model_choice == "Linear Regressor":
+                    model = LinearRegression()
+                elif model_choice == "SVM Regressor":
+                    model = SVR()
+                elif model_choice == "Decision Tree Regressor":
+                    model = DecisionTreeRegressor()
+                else:
+                    model = RandomForestRegressor()
+                    
 
             pipeline = Pipeline(
                 [
