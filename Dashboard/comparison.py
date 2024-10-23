@@ -38,7 +38,7 @@ def compare():
 
         # Input fields for drift points
         first_point = st.number_input("Enter the first drift point:", min_value=1000, value=7000, step=1000)
-        second_point = st.number_input("Enter the second drift point:", min_value=first_point + 1000, value=11000, step=1000)
+        second_point = st.number_input("Enter the second drift point:", min_value=first_point + 1000, value=first_point+4000, step=1000)
 
         # Button to trigger computation
         if st.button("Run Drift Detection"):
@@ -248,7 +248,8 @@ def compare():
                 drift_results[detector_name] = {
                     'False Alarms': false_alarms,
                     'False Alarm Rate': false_alarm_rate,
-                    'Average Detection Delay': average_detection_delay
+                    'Detection Delay': average_detection_delay,
+                    'Average Measure': (false_alarms + average_detection_delay) / 2 
                 }
 
                 # Prepare data for visualizations
@@ -278,7 +279,7 @@ def compare():
 
                 # Plot False Alarm Rate
                 false_alarm_chart = alt.Chart(results_df.reset_index()).mark_bar().encode(
-                    x=alt.X('index:N', title='Detector'),
+                    x=alt.X('index:N', title='Detector', sort=None),
                     y=alt.Y('False Alarm Rate:Q', title='False Alarm Rate')
                 ).properties(
                     width=600,
@@ -289,14 +290,26 @@ def compare():
 
                 # Plot Detection Delay
                 detection_delay_chart = alt.Chart(results_df.reset_index()).mark_bar().encode(
-                    x=alt.X('index:N', title='Detector'),
-                    y=alt.Y('Average Detection Delay:Q', title='Detection Delay')
+                    x=alt.X('index:N', title='Detector', sort=None),
+                    y=alt.Y('Detection Delay:Q', title='Detection Delay')
                 ).properties(
                     width=600,
                     height=300,
-                    title='Average Detection Delay for Each Detector'
+                    title='Detection Delay for Each Detector'
                 )
                 st.altair_chart(detection_delay_chart, use_container_width=True)
+
+                # Plot Average Measure
+                detection_delay_chart = alt.Chart(results_df.reset_index()).mark_bar().encode(
+                    x=alt.X('index:N', title='Detector', sort=None),
+                    y=alt.Y('Average Measure:Q', title='Average Measure')
+                ).properties(
+                    width=600,
+                    height=300,
+                    title='Average Measure for Each Detector'
+                )
+                st.altair_chart(detection_delay_chart, use_container_width=True)
+                
 
             # Right side (graphs)
             with col2:

@@ -20,8 +20,8 @@ elif selected == "Comparison":
     import comparison
     comparison.compare()
 elif selected == "Choice":
-    import choice
-    choice.choose()
+    import choice2
+    choice2.choose() 
 elif selected == "Upload":
     import real_dataset
     real_dataset.detect()

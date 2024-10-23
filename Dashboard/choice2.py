@@ -35,7 +35,7 @@ def choose():
     if st.button("Run Drift Detection"):
 
         # Left and Right side columns
-        col1, empty_col, col2 = st.columns([1, 0.1, 1])
+        col1, empty_col, col2 = st.columns([1, 0.1, 1]) 
 
         # Dataset generation
         dataset = synth.FriedmanDrift(
@@ -133,7 +133,10 @@ def choose():
 
 
         with col1:
-            st.subheader("Results by optimum configuration")
+            st.subheader("Results Table")
+
+        with col2:
+            st.subheader("Results Chart") 
 
         optimum_all_results = [] 
 
@@ -270,25 +273,28 @@ def choose():
                 results_df = pd.DataFrame(drift_results).T
                 st.write(results_df)
 
+            with col2:
                 optimum_avg_chart = alt.Chart(results_df.reset_index()).mark_bar().encode(
                     x=alt.X('Average Measure:Q', title='Average Measure'),
                     y=alt.Y('index:N', title='Detector', sort=None)  # Ensure detectors are not sorted alphabetically
                 ).properties(
                     width=400,
-                    height=200,
+                    height=230,
                     title='Average Measure for Each Detector (Optimum Configuration)'
                 )
                 st.altair_chart(optimum_avg_chart, use_container_width=True)
 
-        with col1:
-            # Sort the results by average measure in ascending order and select the top 4
-            sorted_results = sorted(optimum_all_results, key=lambda x: x[2])[:4]
+    
+        # Sort the results by average measure in ascending order and select the top 4
+        sorted_results = sorted(optimum_all_results, key=lambda x: x[2])[:4]
 
+        with col1:
             # Display the top 4 combinations at the bottom of the app
             st.subheader("Least Average Measures") 
             top_4_df = pd.DataFrame(sorted_results, columns=["Model", "Detector", "Average Measure"])
             st.write(top_4_df)
 
+        with col2:
             # Convert 'all_results' to a DataFrame
             all_results_df = pd.DataFrame(optimum_all_results, columns=['Model', 'Detector', 'Average Measure'])
 
@@ -312,185 +318,4 @@ def choose():
 
 
 
-        with col2:
-            st.subheader("Results by default configuration")
-
-        default_all_results = []  
-
-        for n, model in enumerate(models):
-
-            pipeline = Pipeline(
-                [
-                    ("scaler", StandardScaler()),
-                    ("model", model[1]),
-                ]
-            )
-            pipeline.fit(X=X_train, y=y_train)
-
-            odp = [first_point]  # Actual drift point
-
-            X_stream = stream.drop(columns='y').values
-            y_stream = stream['y'].values
-
-            
-            # Dictionary to store metrics for each detector
-            drift_results = {}
-            error_data = {}
-            drift_data = {}
-
-            metric = PrequentialError(alpha=0.9)
-
-            detectors = [
-                ('DDM', DDM(config=DDMConfig())),
-                ('EDDM', EDDM(config=EDDMConfig())),
-                ('ADWIN', ADWIN(config=ADWINConfig())),
-                ('Page Hinkley', PageHinkley(config=PageHinkleyConfig()))
-            ] 
-
-            for detector_name, detector in detectors:
-                detected_drifts = []
-                false_alarms = 0
-                detection_delays = []
-                y_preds = []
-                errors = []
-
-                if detector_name in ['DDM','EDDM']:
-                    for i in range(len(X_stream)):
-                        X_i = X_stream[i].reshape(1, -1)
-                        y_i = y_stream[i].reshape(1, -1)
-
-                        threshold = 50.0 # if detector_name=='DDM' else 83.146
-
-                        # Predict and calculate the error
-                        y_pred = pipeline.predict(X_i)
-                        y_preds.append(y_pred[0])
-                        error = mean_squared_error(y_i, y_pred)
-                        errors.append(error)
-
-                        binary_error = 1 if error > threshold else 0
-
-                        # Update the detector with the error
-                        detector.update(value=binary_error)
-
-                        # Check for detected drift
-                        if detector.drift:
-                            detected_drifts.append(i + len(train))
-
-                            # False alarm detection
-                            if i + len(train) < odp[0]:
-                                false_alarms += 1
-                            else:
-                                detection_delays.append((i + len(train)) - odp[0])
-
-                    false_alarm_rate = false_alarms / (first_point-len(train)) if detected_drifts else 0
-                    average_detection_delay = int(detection_delays[0]) if detection_delays else None
-
-                else:
-                    for i in range(len(X_stream)):
-                        X_i = X_stream[i].reshape(1, -1)
-                        y_i = y_stream[i].reshape(1, -1)
-
-                        # Predict and calculate the error
-                        y_pred = pipeline.predict(X_i)
-                        y_preds.append(y_pred[0])
-                        error = mean_squared_error(y_true=y_i, y_pred=y_pred)
-                        metric_error = metric(error_value=error)
-                        # error = metric(error_value=mean_squared_error(y_true=y_i, y_pred=y_pred))
-                        errors.append(metric_error)
-
-                        # Update Page Hinkley with the error (0 for correct, 1 for incorrect)
-                        # detector.update(value=1 if error > 0 else 0)
-
-                        # Step 4: Update the drift detector with the current error
-                        detector.update(value=error)
-
-                        # Step 5: Check for detected drift
-                        if detector.drift:
-                            # print(f"Change detected at step {i}")
-                            detected_drifts.append(i)
-
-                            # Determine if it's a false alarm or not
-                            if i + len(train) < first_point:  # Compare with the original drift point
-                                false_alarms += 1
-                            else:
-                                #if isFirst:
-                                    #isFirst = False
-                                detection_delays.append((i + len(train)) - odp[0])
-                            detector.reset()
-
-                        # Check for detected warning
-                        #if not warning_flag and detector.warning:
-                        #   print(f"Warning detected at step {i}")
-                        #  warning_flag = True
-
-                    false_alarm_rate = (false_alarms / (first_point-len(train))) * 100 if detected_drifts else 0
-                    average_detection_delay = int(detection_delays[0]) if detection_delays else None
-
-                # Save results
-                drift_results[detector_name] = {
-                    'False Alarms': false_alarms,
-                    'False Alarm Rate': false_alarm_rate,
-                    'Detection Delay': average_detection_delay,
-                    'Average Measure': (false_alarms + average_detection_delay) / 2 
-                }
-
-                default_all_results.append((model[0], detector_name, drift_results[detector_name]['Average Measure']))
-
-
-                # Prepare data for visualizations
-                error_data[detector_name] = pd.DataFrame({
-                    'Index': np.arange(len(errors)) + (first_point // 2),
-                    'Mean Squared Error': errors
-                })
-
-                drift_data[detector_name] = pd.DataFrame({
-                    'Index': np.arange(len(data)),
-                    'Detected Drift Indicator': [1 if i in detected_drifts else 0 for i in range(len(data))],
-                    'Actual Drift Indicator': [1 if i >= odp[0] else 0 for i in range(len(data))]
-                })
-
-            with col2: 
-                # Display results in a table
-                st.write(model[0])
-                results_df = pd.DataFrame(drift_results).T
-                st.write(results_df) 
-
-                default_avg_chart = alt.Chart(results_df.reset_index()).mark_bar().encode(
-                    x=alt.X('Average Measure:Q', title='Average Measure'),
-                    y=alt.Y('index:N', title='Detector', sort=None)  # Ensure detectors are not sorted alphabetically
-                ).properties(
-                    width=400,
-                    height=200,
-                    title='Average Measure for Each Detector (Default Configuration)'
-                )
-                st.altair_chart(default_avg_chart, use_container_width=True)   
-
-        with col2:
-            # Sort the results by average measure in ascending order and select the top 4
-            sorted_results = sorted(default_all_results, key=lambda x: x[2])[:4]
-
-            # Display the top 4 combinations at the bottom of the app
-            st.subheader("Least Average Measures")
-            top_4_df = pd.DataFrame(sorted_results, columns=["Model", "Detector", "Average Measure"])
-            st.write(top_4_df)
-
-            # Convert 'all_results' to a DataFrame 
-            all_results_df = pd.DataFrame(default_all_results, columns=['Model', 'Detector', 'Average Measure'])
-
-            # Create a new column for the combined 'Detector-Model' label
-            all_results_df['Detector-Model'] = all_results_df['Detector'] + ' - ' + all_results_df['Model']
-
-            # Create a horizontal bar chart with exactly 16 bars
-            horizontal_bar_chart = alt.Chart(all_results_df.head(16)).mark_bar().encode(
-                x=alt.X('Average Measure:Q', title='Average Measure'),  # Quantitative axis (horizontal)
-                y=alt.Y('Detector-Model:N', title='Detector-Model Combination', sort=None),  # Categorical axis (vertical)
-                color=alt.Color('Model:N', title='Model'),  # Color the bars by model
-                tooltip=['Model', 'Detector', 'Average Measure']  # Display additional info on hover
-            ).properties(
-                width=600,  # Adjust chart width
-                height=400,  # Adjust chart height
-                title='Average Measure for Detector-Model Combinations'
-            )
-
-            # Display the chart in Streamlit
-            st.altair_chart(horizontal_bar_chart, use_container_width=True)
+        
