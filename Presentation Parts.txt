@@ -1,8 +1,0 @@
-intro 
-problem statement
-objective
-lit. review
-methodology 
-experiment
-conclusion
-reference

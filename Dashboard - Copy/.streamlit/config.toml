@@ -1,4 +1,0 @@
-# .streamlit/config.toml
-
-[server]
-maxUploadSize = 1024  # Set this to your desired limit in megabytes (e.g., 1024 for 1GB)
