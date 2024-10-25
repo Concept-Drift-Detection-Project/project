@@ -50,7 +50,7 @@ def run_simulation():
 
         # Input fields for drift points, step set to 1000
         first_point = st.number_input("Enter the first drift point:", min_value=1000, value=7000, step=1000)
-        second_point = st.number_input("Enter the second drift point:", min_value=first_point + 1000, value=11000, step=1000)
+        second_point = st.number_input("Enter the second drift point:", min_value=first_point + 1000, value=first_point+4000, step=1000)
 
         # Parameters based on drift detection method
         if drift_method == "DDM":

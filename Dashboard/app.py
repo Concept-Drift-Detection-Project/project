@@ -5,8 +5,9 @@ st.markdown(
     """
     <style>
     .sidebar .sidebar-content h1 {
-        font-size: 48px;
+        font-size: 100px;
         font-weight: bold;
+        font-style: italic; 
     }
     </style>
     """,
